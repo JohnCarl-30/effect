@@ -356,7 +356,8 @@ export const renameIndices: {
 )
 
 /**
- * Applies a `Struct.Lambda` transformation to every element in a tuple.
+ * Applies the same transformation to every element in a tuple, preserving its
+ * length.
  *
  * **When to use**
  *
@@ -364,12 +365,23 @@ export const renameIndices: {
  *
  * **Details**
  *
- * The lambda lets the compiler track the output type for each element.
+ * An ordinary callback receives the union of the element types, and every
+ * position in the result has the callback's return type. A `Struct.Lambda`
+ * lets the compiler track the output type for each element separately.
  *
  * **Gotchas**
  *
- * The lambda must be created with `Struct.lambda`; a plain function will not
- * type-check.
+ * In data-last form, annotate the callback parameter; otherwise it is
+ * inferred as `unknown`.
+ *
+ * **Example** (Incrementing every element)
+ *
+ * ```ts import.meta.vitest
+ * import { Tuple } from "effect"
+ *
+ * const xs: [number, number, number] = [1, 2, 3]
+ * Tuple.map(xs, (n) => n + 1) // => [2, 3, 4]
+ * ```
  *
  * **Example** (Wrapping every element in an array)
  *
@@ -402,6 +414,8 @@ export const map: {
     self: T,
     lambda: L
   ): { [K in keyof T]: Apply<L, T[K]> }
+  <A, B>(f: (a: A) => B): <const T extends ReadonlyArray<A>>(self: T) => { [K in keyof T]: B }
+  <const T extends ReadonlyArray<unknown>, B>(self: T, f: (a: T[number]) => B): { [K in keyof T]: B }
 } = dual(
   2,
   <const T extends ReadonlyArray<unknown>, L extends Function>(self: T, lambda: L) => {

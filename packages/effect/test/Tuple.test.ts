@@ -79,6 +79,11 @@ describe("Tuple", () => {
     ])
   })
 
+  it("map transforms every element with an ordinary callback", () => {
+    deepStrictEqual(pipe(tuple, Tuple.map((x: string | number | boolean) => `${x}`)), ["a", "2", "true"])
+    deepStrictEqual(Tuple.map([1, 2, 3] as [number, number, number], (n) => n + 1), [2, 3, 4])
+  })
+
   it("mapPick transforms only the selected schema elements", () => {
     const tuple = [Schema.String, Schema.Number, Schema.Boolean] as const
     TestSchema.Asserts.ast.elements.equals(pipe(tuple, Tuple.mapPick([0, 2], Schema.NullOr)), [

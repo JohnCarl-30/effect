@@ -159,6 +159,36 @@ describe("Tuple", () => {
     >()
   })
 
+  describe("map with a callback", () => {
+    const numbers = [1, 2, 3] as [number, number, number]
+
+    it("preserves the tuple length", () => {
+      expect(Tuple.map(numbers, (n) => n + 1)).type.toBe<[number, number, number]>()
+      expect(pipe(numbers, Tuple.map((n: number) => n + 1))).type.toBe<[number, number, number]>()
+      expect(Tuple.map(numbers, (n) => n)).type.toBe<[number, number, number]>()
+    })
+
+    it("passes the element union to the callback", () => {
+      expect(Tuple.map(tuple, (x) => {
+        expect(x).type.toBe<string | number | boolean>()
+        return String(x)
+      })).type.toBe<[string, string, string]>()
+      expect(Tuple.map).type.not.toBeCallableWith(tuple, (x: string) => x)
+    })
+
+    it("keeps readonly, optional, rest and empty tuples", () => {
+      expect(Tuple.map(optionalTuple, String)).type.toBe<[string?, string?, string?]>()
+      expect(Tuple.map(["a", 1] as readonly [string, ...Array<number>], String)).type.toBe<
+        readonly [string, ...Array<string>]
+      >()
+      expect(Tuple.map([] as [], String)).type.toBe<[]>()
+    })
+
+    it("does not preserve literals", () => {
+      expect(Tuple.map([1, 2, 3] as const, (n) => n + 1)).type.toBe<readonly [number, number, number]>()
+    })
+  })
+
   it("mapPick", () => {
     const tuple = [Schema.String, Schema.Number, Schema.Boolean] as const
     expect(pipe(tuple, Tuple.mapPick([0, 2], Schema.NullOr))).type.toBe<
